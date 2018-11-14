@@ -1,0 +1,92 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt 
+plt.rc("font", size=14)
+import statsmodels.api as sm
+from sklearn import linear_model
+from sklearn.model_selection import train_test_split
+import seaborn as sns
+sns.set(style="white")
+sns.set(style="whitegrid", color_codes=True)
+lm = linear_model.LinearRegression()
+
+pd.options.display.max_rows = 999
+pd.options.display.max_columns = 999
+
+df = pd.read_csv('Expected_Return.csv')
+
+X_train, X_test = train_test_split(df)
+
+def process_data(df):
+    df.replace([np.inf, -np.inf], np.nan)
+    df = df.fillna(0)
+    return df
+    
+def one_hot_encoding(df):
+    #this function performs one-hot encoding
+    df = pd.get_dummies(df,columns=[
+        'Prosper_Rating', 
+        'Initial_Status', 
+        'Employment_Status',
+        #'Occupation',
+        'Has_Mortgage',
+        #'State'
+    ])
+    return df
+    
+X_train = process_data(X_train)
+X_test = process_data(X_test)
+
+X_train = one_hot_encoding(X_train)
+
+features = [
+    'Amount', 
+    'Monthly_Payment', 
+    'Revolving_Credit_Balance', 
+    'Debt_Income_Ratio', 
+    'Prosper_Score',
+    'Inquiries_Last_6m',
+    'Current_Delinquencies',
+    'Amount_Delinquent',
+    'Total_Credit_Lines',
+    'Delinquencies_Last_7y',
+    'Bankcard_Utilization',
+    'Stated_Income_Lower_Bound',
+    'FICO_Range_Lower_Bound',
+    'Public_Records_Last_10y',
+    'Public_Records_Last_24m',
+    'Prosper_Rating_A', 
+    'Prosper_Rating_AA',
+    'Prosper_Rating_B', 
+    'Prosper_Rating_C', 
+    'Prosper_Rating_D',
+    'Prosper_Rating_E', 
+    'Prosper_Rating_HR', 
+    'Initial_Status_F',
+    'Employment_Status_Employed', 
+    'Employment_Status_Other', 
+    'Employment_Status_Self-employed',
+    'Has_Mortgage_No', 
+    'Has_Mortgage_Yes'
+]
+
+y_train = X_train['Estimated_Return']
+X_train = X_train[features]
+
+model = lm.fit(X_train, y_train)
+
+X_test = one_hot_encoding(X_test)
+
+y_test = X_test['Estimated_Return']
+X_test = X_test[features]
+
+X_test = process_data(X_test)
+
+preds = lm.predict(X_test)
+
+R2 = lm.score(X_test, y_test)
+R2
+
+plt.scatter(y_test, preds)
+plt.xlabel('True Values')
+plt.ylabel('Predictions')
